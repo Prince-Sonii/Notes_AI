@@ -4,7 +4,7 @@ import api from '../api/axiosConfig';
 import '../App.css';
 import Swal from 'sweetalert2';
 import toast, { Toaster } from 'react-hot-toast';
-import { FaTrash, FaPencilAlt } from 'react-icons/fa';
+import { FaTrash, FaPencilAlt, FaSearch, FaPlus, FaSignOutAlt, FaStickyNote } from 'react-icons/fa';
 
 function Dashboard() {
     const [notes, setNotes] = useState([]);
@@ -51,6 +51,8 @@ const handleEdit = async (note) => {
             showCancelButton: true,
             confirmButtonColor: '#6366f1',
             confirmButtonText: 'Update',
+            background: '#1a1a2e',
+            color: '#e2e8f0',
             preConfirm: () => {
                 return [
                     document.getElementById('swal-input1').value,
@@ -63,19 +65,13 @@ const handleEdit = async (note) => {
         if (formValues) {
             const [newTitle, newContent] = formValues;
 
-            // Optimistic UI update (update list immediately)
-            // Or call API then update. Let's call API.
             try {
-                // Assuming your backend supports PUT /notes/{id}
                 const response = await api.put(`/notes/${note.id}`, {
                     title: newTitle,
                     content: newContent
                 });
 
-                // Update local state
                 setNotes(notes.map(n => n.id === note.id ? response.data : n));
-
-                // Show Toastr Success Message
                 toast.success('Note updated successfully!');
             } catch (error) {
                 console.error("Update failed", error);
@@ -87,14 +83,13 @@ const handleEdit = async (note) => {
     const fetchNotes = async () => {
             try {
                 const response = await api.get('/notes');
-                console.log("API Response:", response.data); // Debugging line
+                console.log("API Response:", response.data);
 
-                // Only set notes if the data is actually an array
                 if (Array.isArray(response.data)) {
                     setNotes(response.data);
                 } else {
                     console.error("Unexpected data format:", response.data);
-                    setNotes([]); // Fallback to empty array to prevent crash
+                    setNotes([]);
                 }
             } catch (error) {
                 console.error("Error fetching notes:", error);
@@ -111,7 +106,6 @@ const handleEdit = async (note) => {
 
         try {
             await api.post('/notes', { title, content });
-            // Clear form and refresh list
             setTitle('');
             setContent('');
             fetchNotes();
@@ -121,35 +115,30 @@ const handleEdit = async (note) => {
     };
 
     // 3. Delete a Note
-    // --- NEW: DELETE FUNCTION WITH CONFIRMATION ---
         const handleDelete = async (id) => {
-            // 1. Show Confirmation Dialog
             const result = await Swal.fire({
                 title: 'Are you sure?',
                 text: "You won't be able to revert this!",
                 icon: 'warning',
                 showCancelButton: true,
-                confirmButtonColor: '#ef4444', // Red color for danger
-                cancelButtonColor: '#6366f1', // Indigo for cancel
-                confirmButtonText: 'Yes, delete it!'
+                confirmButtonColor: '#ef4444',
+                cancelButtonColor: '#6366f1',
+                confirmButtonText: 'Yes, delete it!',
+                background: '#1a1a2e',
+                color: '#e2e8f0',
             });
 
-            // 2. If User Confirmed
             if (result.isConfirmed) {
                 try {
-                    // Call API
                     await api.delete(`/notes/${id}`);
-
-                    // Remove from UI immediately
                     setNotes(notes.filter(note => note.id !== id));
-
-                    // Show Success Toast
                     toast.success('Note deleted successfully', {
                         icon: '🗑️',
                         style: {
                             borderRadius: '10px',
-                            background: '#333',
-                            color: '#fff',
+                            background: '#1a1a2e',
+                            color: '#e2e8f0',
+                            border: '1px solid rgba(255,255,255,0.06)',
                         },
                     });
                 } catch (error) {
@@ -166,19 +155,44 @@ const handleEdit = async (note) => {
             navigate('/login');
         } catch (error) {
             console.error("Logout failed", error);
-            navigate('/login'); // Force redirect anyway
+            navigate('/login');
         }
     };
 
     return (
             <div className="container">
-                <Toaster position="top-right" />
-                {/* Header stays full width */}
+                <Toaster position="top-right" toastOptions={{
+                    style: {
+                        background: '#1a1a2e',
+                        color: '#e2e8f0',
+                        border: '1px solid rgba(255,255,255,0.06)',
+                    }
+                }} />
+
+                {/* Header */}
                 <header className="header">
-                    <h1>My Notes</h1>
-                    <button onClick={handleLogout} className="btn btn-danger">
-                        Logout
-                    </button>
+                    <h1>✦ My Notes</h1>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+                        <span style={{
+                            padding: '0.35rem 0.85rem',
+                            borderRadius: '50px',
+                            background: 'rgba(129, 140, 248, 0.08)',
+                            border: '1px solid rgba(129, 140, 248, 0.15)',
+                            color: '#818cf8',
+                            fontSize: '0.8rem',
+                            fontWeight: 600,
+                        }}>
+                            {notes.length} {notes.length === 1 ? 'Note' : 'Notes'}
+                        </span>
+                        <button onClick={handleLogout} className="btn btn-danger" style={{
+                            display: 'flex',
+                            alignItems: 'center',
+                            gap: '0.4rem'
+                        }}>
+                            <FaSignOutAlt style={{ fontSize: '0.8rem' }} />
+                            Logout
+                        </button>
+                    </div>
                 </header>
 
                 {/* Main Layout: 2 Columns */}
@@ -187,9 +201,31 @@ const handleEdit = async (note) => {
                     {/* Left Column: Editor */}
                     <aside className="editor-section">
                         <form onSubmit={handleAddNote} className="note-form">
-                            <h2 style={{margin: '0 0 1rem 0', fontSize: '1.2rem', color: 'var(--primary)'}}>
-                                Add New Note
+                            <h2 style={{
+                                margin: '0 0 0.25rem 0',
+                                fontSize: '1.1rem',
+                                fontWeight: 600,
+                                background: 'linear-gradient(135deg, #818cf8, #c084fc)',
+                                WebkitBackgroundClip: 'text',
+                                WebkitTextFillColor: 'transparent',
+                                backgroundClip: 'text',
+                                display: 'flex',
+                                alignItems: 'center',
+                                gap: '0.5rem'
+                            }}>
+                                <FaStickyNote style={{
+                                    WebkitTextFillColor: '#818cf8',
+                                    fontSize: '0.95rem'
+                                }} />
+                                New Note
                             </h2>
+                            <p style={{
+                                color: '#64748b',
+                                fontSize: '0.82rem',
+                                margin: '0 0 0.5rem 0'
+                            }}>
+                                Write something worth remembering
+                            </p>
                             <input
                                 type="text"
                                 placeholder="Title"
@@ -203,46 +239,90 @@ const handleEdit = async (note) => {
                                 value={content}
                                 onChange={e => setContent(e.target.value)}
                                 className="form-textarea"
-                                style={{minHeight: '150px'}} // Make it taller
+                                style={{ minHeight: '150px' }}
                                 required
                             />
-                            <button type="submit" className="btn btn-primary" style={{width: '100%'}}>
-                                + Add Note
+                            <button type="submit" className="btn btn-primary" style={{
+                                width: '100%',
+                                display: 'flex',
+                                alignItems: 'center',
+                                justifyContent: 'center',
+                                gap: '0.4rem'
+                            }}>
+                                <FaPlus style={{ fontSize: '0.8rem' }} />
+                                Add Note
                             </button>
                         </form>
                     </aside>
 
                     {/* Right Column: Scrollable List */}
                     <main className="notes-section">
-                        <form onSubmit={handleSearch} style={{ marginBottom: '1.5rem', display: 'flex', gap: '10px' }}>
-                                                <input
-                                                    type="text"
-                                                    placeholder="Search notes (e.g., 'Project ideas' or 'shopping list')..."
-                                                    value={searchQuery}
-                                                    onChange={e => setSearchQuery(e.target.value)}
-                                                    className="form-input"
-                                                    style={{ flex: 1 }}
-                                                />
-                                                <button type="submit" className="btn btn-primary" disabled={isSearching}>
-                                                    {isSearching ? 'Thinking...' : 'AI Search'}
-                                                </button>
-                                                {searchQuery && (
-                                                    <button
-                                                        type="button"
-                                                        className="btn btn-danger"
-                                                        onClick={() => { setSearchQuery(''); fetchNotes(); }}
-                                                    >
-                                                        Clear
-                                                    </button>
-                                                )}
-                                            </form>
+                        {/* Search Bar */}
+                        <form onSubmit={handleSearch} style={{
+                            marginBottom: '0.5rem',
+                            display: 'flex',
+                            gap: '8px',
+                            alignItems: 'stretch'
+                        }}>
+                            <div style={{ flex: 1, position: 'relative' }}>
+                                <FaSearch style={{
+                                    position: 'absolute',
+                                    left: '0.85rem',
+                                    top: '50%',
+                                    transform: 'translateY(-50%)',
+                                    color: '#64748b',
+                                    fontSize: '0.85rem'
+                                }} />
+                                <input
+                                    type="text"
+                                    placeholder="Search notes semantically..."
+                                    value={searchQuery}
+                                    onChange={e => setSearchQuery(e.target.value)}
+                                    className="form-input"
+                                    style={{ paddingLeft: '2.5rem', width: '100%' }}
+                                />
+                            </div>
+                            <button type="submit" className="btn btn-primary" disabled={isSearching} style={{
+                                whiteSpace: 'nowrap'
+                            }}>
+                                {isSearching ? (
+                                    <>
+                                        <span style={{
+                                            display: 'inline-block',
+                                            width: '14px',
+                                            height: '14px',
+                                            border: '2px solid rgba(255,255,255,0.3)',
+                                            borderTopColor: 'white',
+                                            borderRadius: '50%',
+                                            animation: 'spin 0.6s linear infinite'
+                                        }} />
+                                        Thinking...
+                                    </>
+                                ) : (
+                                    <>
+                                        <FaSearch style={{ fontSize: '0.75rem' }} />
+                                        AI Search
+                                    </>
+                                )}
+                            </button>
+                            {searchQuery && (
+                                <button
+                                    type="button"
+                                    className="btn btn-danger"
+                                    onClick={() => { setSearchQuery(''); fetchNotes(); }}
+                                >
+                                    Clear
+                                </button>
+                            )}
+                        </form>
+
+                        {/* Notes List */}
                         {Array.isArray(notes) && notes.length > 0 ? (
-                            notes.slice().reverse().map(note => ( // reverse() shows newest first
+                            notes.slice().reverse().map(note => (
                                 <div key={note.id} className="note-card">
                                     <div>
                                         <h3 className="note-title">{note.title}</h3>
-                                        <p className="note-content" style={{whiteSpace: 'pre-wrap'}}>
-                                            {/* pre-wrap preserves line breaks from the textarea */}
+                                        <p className="note-content" style={{ whiteSpace: 'pre-wrap' }}>
                                             {note.content}
                                         </p>
                                     </div>
@@ -273,13 +353,39 @@ const handleEdit = async (note) => {
                                 </div>
                             ))
                         ) : (
-                            <div style={{ textAlign: 'center', color: '#94a3b8', marginTop: '4rem' }}>
-                                <p>No notes found.</p>
-                                <p>Use the form on the left to create one!</p>
+                            <div style={{
+                                textAlign: 'center',
+                                color: '#64748b',
+                                marginTop: '6rem',
+                                animation: 'fadeIn 0.5s ease'
+                            }}>
+                                <FaStickyNote style={{
+                                    fontSize: '3rem',
+                                    color: 'rgba(129, 140, 248, 0.2)',
+                                    marginBottom: '1rem'
+                                }} />
+                                <p style={{
+                                    fontSize: '1.1rem',
+                                    fontWeight: 600,
+                                    color: '#94a3b8',
+                                    marginBottom: '0.4rem'
+                                }}>
+                                    No notes yet
+                                </p>
+                                <p style={{ fontSize: '0.9rem' }}>
+                                    Use the form on the left to create your first note!
+                                </p>
                             </div>
                         )}
                     </main>
                 </div>
+
+                {/* Inline keyframes for spinner */}
+                <style>{`
+                    @keyframes spin {
+                        to { transform: rotate(360deg); }
+                    }
+                `}</style>
             </div>
         );
 }

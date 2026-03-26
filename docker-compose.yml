@@ -5,13 +5,19 @@ services:
     container_name: notes_db_container
     restart: always
     environment:
-      POSTGRES_DB: notes_db       # Creates this DB on startup
-      POSTGRES_USER: postgres     # Default user
-      POSTGRES_PASSWORD: password # Default password
+      POSTGRES_DB: notes_db
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: password
     ports:
-      - "5433:5432"               # Expose to host
+      - "5433:5432"
     volumes:
-      - db_data:/var/lib/postgresql/data # Persist data even if container stops
+      - db_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres -d notes_db"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+      start_period: 10s
 
   # 2. The Backend Service
   backend:
@@ -19,13 +25,13 @@ services:
     ports:
       - "8080:8080"
     environment:
-      # This overrides the 'localhost' default in application.properties
       - DB_HOST=db
       - DB_USER=postgres
       - DB_PASSWORD=password
       - HUGGINGFACE_API_KEY=${HUGGINGFACE_API_KEY}
     depends_on:
-      - db
+      db:
+        condition: service_healthy
 
   # 3. The Frontend Service
   frontend:
